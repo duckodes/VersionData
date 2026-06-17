@@ -1,2 +1,3 @@
 cls
 node app
+pause
