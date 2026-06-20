@@ -267,6 +267,4 @@ console.log("History match:", JSON.stringify(actualHistory) === JSON.stringify(e
 console.log("===Checking save data to new data===");
 const saveData = data.getSaveData();
 const newData = new VersionData(saveData);
-console.log(newData.getData());
-console.log(data.getData());
-console.log("result" + newData.getData() === data.getData());
+console.log(JSON.stringify(newData.getData()) === JSON.stringify(data.getData()));
