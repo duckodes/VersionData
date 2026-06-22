@@ -264,7 +264,17 @@ console.log("Archive match:", JSON.stringify(actualArchive) === JSON.stringify(e
 console.log("History match:", JSON.stringify(actualHistory) === JSON.stringify(expectedHistory));
 
 
-console.log("===Checking save data to new data===");
-const saveData = data.getSaveData();
+const saveData = data.getSave().data;
 const newData = new VersionData(saveData);
-console.log(JSON.stringify(newData.getData()) === JSON.stringify(data.getData()));
+console.log("Checking save data to new data... result:", JSON.stringify(newData.getData()) === JSON.stringify(data.getData()));
+
+async function testing() {
+    const saveDataCompress = await data.getSave().compress();
+    
+    const newDataCompress = new VersionData({});
+    console.log(newDataCompress);
+    await newDataCompress.getSave().decompress(saveDataCompress);
+    
+    console.log("Checking Compress save data to new data... result:", JSON.stringify(newDataCompress.getData()) === JSON.stringify(data.getData()));
+}
+testing();

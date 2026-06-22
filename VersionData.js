@@ -1,5 +1,12 @@
+import { setTimeout } from 'timers/promises';
+import { brotliCompress, brotliDecompress } from 'zlib';
+
 class VersionData {
-    constructor({ maxDataSize, maxArchiveSize, records = [], archive = [], diffs = [], currentState = {} }) {
+    constructor({ maxDataSize = 3, maxArchiveSize = 7, records = [], archive = [], diffs = [], currentState = {} }) {
+        this.set({ maxDataSize, maxArchiveSize, records, archive, diffs, currentState });
+    }
+
+    set({ maxDataSize = 3, maxArchiveSize = 7, records = [], archive = [], diffs = [], currentState = {} }) {
         /**歷史資料最大容量 */
         this.maxDataSize = maxDataSize;
         /**遺棄資料最大容量 */
@@ -108,15 +115,55 @@ class VersionData {
         return this.archive.map(a => this._clone(a));
     }
 
-    /**儲存資料: 建立物件時儲存資料導入 */
-    getSaveData() {
+    /**儲存資料: 建立物件將儲存資料導入
+     * 
+     * 壓縮技術使用 Brotli: 高壓縮率
+     * 儲存可選擇壓縮儲存法
+     */
+    getSave() {
+        const base = () => {
+            return {
+                maxDataSize: this.maxDataSize,
+                maxArchiveSize: this.maxArchiveSize,
+                records: this.records,
+                archive: this.archive,
+                diffs: this.diffs,
+                currentState: this.currentState
+            }
+        }
+        const json = JSON.stringify(base());
+
         return {
-            maxDataSize: this.maxDataSize,
-            maxArchiveSize: this.maxArchiveSize,
-            records: this.records,
-            archive: this.archive,
-            diffs: this.diffs,
-            currentState: this.currentState
+            data: base(),
+            json: json,
+            /**Brotli 壓縮成二進位資料 */
+            compress: async () => {
+                let data;
+                console.log(`json 檔案大小: ${Buffer.byteLength(json)} bytes`);
+                brotliCompress(Buffer.from(json), (err, compressed) => {
+                    if (err) {
+                        throw err;
+                    }
+                    data = compressed;
+                    console.log(`壓縮: ${data}, ${data.length} bytes`);
+                });
+                await setTimeout(200);
+                return data;
+            },
+            /**自動解壓縮後直接設置進資料 */
+            decompress: async (compressedData) => {
+                let data;
+                brotliDecompress(compressedData, (err, decompressed) => {
+                    if (err) {
+                        throw err;
+                    }
+                    data = decompressed;
+                    console.log(`解壓縮: ${data}`);
+                });
+                await setTimeout(200);
+                this.set(JSON.parse(data.toString()));
+                return data;
+            }
         }
     }
 
